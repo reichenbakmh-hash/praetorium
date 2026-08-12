@@ -53,7 +53,7 @@ export function Cursor({
 }) {
 	return (
 		<span
-			aria-hidden
+			aria-hidden="true"
 			className="inline-block text-primary [animation:var(--animate-blink)]"
 		>
 			{char}
@@ -73,7 +73,7 @@ export function Divider({
 	return (
 		<div
 			className={`flex items-center gap-2 text-muted ${className}`}
-			aria-hidden
+			aria-hidden="true"
 		>
 			<span className="truncate">
 				{glyph.repeat(28)}
@@ -157,18 +157,22 @@ export function AsciiBar({
 	value: number;
 }) {
 	const segments = 20;
+
 	const filled = Math.round(
 		(value / 100) * segments,
 	);
 
-	const bar = `${"|".repeat(filled)}${".".repeat(
-		segments - filled,
-	)}`;
+	const bar =
+		"|".repeat(filled) +
+		".".repeat(segments - filled);
 
 	return (
 		<div>
 			<div className="mb-1 flex justify-between gap-2 text-2xs">
-				<span className="text-dim">{label}</span>
+				<span className="text-dim">
+					{label}
+				</span>
+
 				<span className="text-primary">
 					{value}%
 				</span>
@@ -181,6 +185,22 @@ export function AsciiBar({
 	);
 }
 
+/*
+ * IMPORTANT:
+ * onChange is removed from the native input props so our component
+ * can expose onChange(value: string) without a TypeScript intersection.
+ */
+type PromptInputProps = Omit<
+	InputHTMLAttributes<HTMLInputElement>,
+	"onChange"
+> & {
+	prompt: string;
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+	tone?: "primary" | "secondary";
+};
+
 export function PromptInput({
 	prompt,
 	label,
@@ -189,39 +209,37 @@ export function PromptInput({
 	placeholder,
 	tone = "primary",
 	...props
-}: {
-	prompt: string;
-	label: string;
-	value: string;
-	onChange: (value: string) => void;
-	tone?: "primary" | "secondary";
-} & InputHTMLAttributes<HTMLInputElement>) {
+}: PromptInputProps) {
 	return (
 		<label className="flex items-center gap-2 text-xs">
 			<span
 				className={
 					tone === "secondary"
-						? "text-secondary"
-						: "text-primary"
+						? "shrink-0 text-secondary"
+						: "shrink-0 text-primary"
 				}
 			>
 				{prompt}
 			</span>
 
-			<span className="sr-only">{label}</span>
-
 			<span className="relative min-w-0 flex-1">
 				<input
 					{...props}
+					aria-label={label}
 					value={value}
 					onChange={(event) =>
-						onChange(event.target.value)
+						onChange(
+							event.target.value,
+						)
 					}
 					placeholder={placeholder}
 					className="w-full border-0 border-b border-dashed border-muted bg-transparent py-1 text-primary placeholder:text-muted focus:border-primary focus:outline-none"
 				/>
 
-				<span className="pointer-events-none absolute right-0 top-1 text-primary [animation:var(--animate-blink)]">
+				<span
+					aria-hidden="true"
+					className="pointer-events-none absolute right-0 top-1 text-primary [animation:var(--animate-blink)]"
+				>
 					█
 				</span>
 			</span>
@@ -229,34 +247,48 @@ export function PromptInput({
 	);
 }
 
+/*
+ * Same fix for textarea:
+ * remove the native onChange before defining our own string callback.
+ */
+type PromptTextareaProps = Omit<
+	TextareaHTMLAttributes<HTMLTextAreaElement>,
+	"onChange"
+> & {
+	prompt: string;
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+};
+
 export function PromptTextarea({
 	prompt,
 	label,
 	value,
 	onChange,
+	placeholder,
 	...props
-}: {
-	prompt: string;
-	label: string;
-	value: string;
-	onChange: (value: string) => void;
-} & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+}: PromptTextareaProps) {
 	return (
 		<label className="flex items-start gap-2 text-xs">
 			<span className="shrink-0 text-secondary">
 				{prompt}
 			</span>
 
-			<span className="sr-only">{label}</span>
-
-			<textarea
-				{...props}
-				value={value}
-				onChange={(event) =>
-					onChange(event.target.value)
-				}
-				className="min-h-24 w-full resize-y border border-dashed border-muted bg-transparent p-2 text-primary placeholder:text-muted focus:border-primary focus:outline-none"
-			/>
+			<span className="relative min-w-0 flex-1">
+				<textarea
+					{...props}
+					aria-label={label}
+					value={value}
+					onChange={(event) =>
+						onChange(
+							event.target.value,
+						)
+					}
+					placeholder={placeholder}
+					className="min-h-24 w-full resize-y border border-dashed border-muted bg-transparent p-2 text-primary placeholder:text-muted focus:border-primary focus:outline-none"
+				/>
+			</span>
 		</label>
 	);
 }
@@ -280,7 +312,9 @@ export function Typewriter({
 		const timer = window.setInterval(() => {
 			index += 1;
 
-			setOutput(text.slice(0, index));
+			setOutput(
+				text.slice(0, index),
+			);
 
 			if (index >= text.length) {
 				window.clearInterval(timer);
