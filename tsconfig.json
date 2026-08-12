@@ -14,7 +14,12 @@
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true
+		"noFallthroughCasesInSwitch": true,
+		"types": ["./worker-configuration.d.ts"]
 	},
-	"include": ["src"]
+	"include": [
+		"src",
+		"worker",
+		"worker-configuration.d.ts"
+	]
 }
